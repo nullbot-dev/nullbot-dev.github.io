@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Дмитрий — Telegram-боты для бизнеса</title>
+<meta name="description" content="Делаю Telegram-ботов для малого бизнеса: приём заявок, запись клиентов, ИИ-консультанты по базе знаний компании. Python, aiogram 3.">
+<meta property="og:title" content="Дмитрий — Telegram-боты для бизнеса">
+<meta property="og:description" content="Боты для заявок, записи и ИИ-консультанты, которые отвечают клиентам 24/7.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232f7cf6'/%3E%3Cpath d='M14 31l32-13-6 30-10-7-5 5 1-8 13-12-16 10z' fill='white'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --surface: #ffffff;
+    --surface-2: #eef1f7;
+    --text: #141821;
+    --muted: #5d6576;
+    --line: #e1e5ee;
+    --accent: #2f7cf6;
+    --accent-ink: #ffffff;
+    --accent-soft: #e4eeff;
+    --chat-bg: #dfe8f3;
+    --bubble-in: #ffffff;
+    --bubble-out: #e1f4d4;
+    --ok: #1f9d55;
+    --shadow: 0 1px 2px rgba(20, 24, 33, .04), 0 8px 24px rgba(20, 24, 33, .06);
+    --radius: 18px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1116;
+      --surface: #161a22;
+      --surface-2: #1d222c;
+      --text: #eef1f6;
+      --muted: #9aa3b4;
+      --line: #262c38;
+      --accent: #5b9bff;
+      --accent-ink: #0b0e13;
+      --accent-soft: #1b2a45;
+      --chat-bg: #121821;
+      --bubble-in: #1f2631;
+      --bubble-out: #2b4d36;
+      --ok: #4cc47e;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+  /* ---------- шапка ---------- */
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 85%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--text); }
+  .logo:hover { text-decoration: none; }
+  .logo-mark {
+    width: 34px; height: 34px; border-radius: 10px; background: var(--accent);
+    display: grid; place-items: center; color: var(--accent-ink); font-size: 15px;
+  }
+  .nav-links { display: flex; gap: 26px; font-weight: 600; font-size: 15px; }
+  .nav-links a { color: var(--muted); }
+  .nav-links a:hover { color: var(--text); text-decoration: none; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 22px; border-radius: 12px; font-weight: 700; font-size: 15px;
+    border: 1px solid transparent; cursor: pointer; transition: transform .15s, background .15s;
+  }
+  .btn:hover { text-decoration: none; transform: translateY(-1px); }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
+  .btn-ghost { background: var(--surface); color: var(--text); border-color: var(--line); }
+  .btn-sm { padding: 9px 16px; font-size: 14px; }
+
+  /* ---------- первый экран ---------- */
+  .hero { padding: 72px 0 56px; display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 13px;
+  }
+  .badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+  h1 { font-size: clamp(34px, 5vw, 54px); line-height: 1.08; letter-spacing: -.02em; margin: 18px 0 18px; font-weight: 800; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .lead { font-size: 18px; color: var(--muted); max-width: 540px; margin: 0 0 30px; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-top: 34px; color: var(--muted); font-size: 14px; font-weight: 600; }
+  .facts span::before { content: "✓"; color: var(--ok); margin-right: 7px; font-weight: 800; }
+
+  /* ---------- макет телефона с чатом ---------- */
+  .phone {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 28px;
+    box-shadow: var(--shadow); overflow: hidden; max-width: 380px; width: 100%; justify-self: center;
+  }
+  .chat-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+    background: linear-gradient(135deg, #5b9bff, #2f7cf6); color: #fff; font-weight: 800; flex: none;
+  }
+  .chat-title { font-weight: 700; font-size: 15px; line-height: 1.2; }
+  .chat-sub { font-size: 12.5px; color: var(--muted); }
+  .chat { background: var(--chat-bg); padding: 16px 14px; display: flex; flex-direction: column; gap: 8px; min-height: 420px; }
+  .msg {
+    max-width: 84%; padding: 8px 12px; border-radius: 14px; font-size: 14px; line-height: 1.45;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, .06); opacity: 0; transform: translateY(6px);
+    animation: pop .4s ease forwards;
+  }
+  .msg.in { background: var(--bubble-in); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .msg.out { background: var(--bubble-out); align-self: flex-end; border-bottom-right-radius: 4px; }
+  .msg b { font-weight: 700; }
+  .kb { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 2px; opacity: 0; animation: pop .4s ease forwards; }
+  .kb span {
+    background: color-mix(in srgb, var(--bubble-in) 70%, transparent); border-radius: 9px; padding: 7px 8px;
+    font-size: 12.5px; text-align: center; font-weight: 600;
+  }
+  .typing { align-self: flex-start; display: flex; gap: 4px; padding: 12px 14px; background: var(--bubble-in); border-radius: 14px; opacity: 0; animation: pop .3s ease forwards; }
+  .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: blink 1.2s infinite; }
+  .typing i:nth-child(2) { animation-delay: .2s; } .typing i:nth-child(3) { animation-delay: .4s; }
+  @keyframes pop { to { opacity: 1; transform: none; } }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .msg, .kb, .typing { animation: none; opacity: 1; transform: none; }
+    .typing i { animation: none; }
+  }
+
+  /* ---------- секции ---------- */
+  section { padding: 72px 0; }
+  .section-head { max-width: 640px; margin-bottom: 36px; }
+  .eyebrow { color: var(--accent); font-weight: 800; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+  h2 { font-size: clamp(28px, 3.6vw, 38px); line-height: 1.15; letter-spacing: -.015em; margin: 8px 0 12px; font-weight: 800; }
+  .section-head p { color: var(--muted); margin: 0; font-size: 17px; }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 26px; box-shadow: var(--shadow); display: flex; flex-direction: column;
+  }
+  .card .icon {
+    width: 46px; height: 46px; border-radius: 13px; background: var(--accent-soft); color: var(--accent);
+    display: grid; place-items: center; font-size: 22px; margin-bottom: 16px;
+  }
+  .card h3 { font-size: 19px; margin: 0 0 8px; line-height: 1.3; }
+  .card p { color: var(--muted); margin: 0 0 16px; font-size: 15px; }
+  .card ul { margin: 0 0 20px; padding: 0; list-style: none; font-size: 14.5px; }
+  .card li { padding: 5px 0 5px 24px; position: relative; }
+  .card li::before { content: "✓"; position: absolute; left: 0; color: var(--ok); font-weight: 800; }
+  .price { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; color: var(--muted); }
+  .price b { font-size: 20px; color: var(--text); }
+
+  /* проекты */
+  .project {
+    display: grid; grid-template-columns: 1fr 340px; gap: 40px; align-items: center;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 36px; box-shadow: var(--shadow);
+  }
+  .project + .project { margin-top: 22px; }
+  .project h3 { font-size: 24px; margin: 6px 0 10px; }
+  .project p { color: var(--muted); margin: 0 0 18px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+  .tag { background: var(--surface-2); border-radius: 8px; padding: 4px 10px; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .project .phone { max-width: 340px; box-shadow: none; }
+  .project .chat { min-height: 0; }
+  .project .msg, .project .kb { animation: none; opacity: 1; transform: none; }
+  .admin-card { background: var(--bubble-in); }
+  .admin-card .row { display: flex; gap: 6px; margin-top: 8px; }
+  .admin-card .row span { flex: 1; text-align: center; font-size: 12px; font-weight: 600; padding: 6px 4px; border-radius: 8px; background: var(--surface-2); }
+  .admin-card .row span.on { background: var(--accent); color: var(--accent-ink); }
+
+  /* процесс */
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; counter-reset: step; }
+  .step { position: relative; padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+  .step::before {
+    counter-increment: step; content: counter(step);
+    width: 34px; height: 34px; border-radius: 10px; background: var(--accent); color: var(--accent-ink);
+    display: grid; place-items: center; font-weight: 800; margin-bottom: 14px;
+  }
+  .step h3 { margin: 0 0 6px; font-size: 17px; }
+  .step p { margin: 0; color: var(--muted); font-size: 14.5px; }
+
+  /* вопросы */
+  .faq { max-width: 780px; }
+  details { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 0 22px; }
+  details + details { margin-top: 10px; }
+  summary { cursor: pointer; list-style: none; padding: 18px 0; font-weight: 700; display: flex; justify-content: space-between; gap: 16px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--accent); font-size: 22px; line-height: 1; transition: transform .2s; }
+  details[open] summary::after { transform: rotate(45deg); }
+  details p { margin: 0 0 18px; color: var(--muted); }
+
+  /* контакты */
+  .cta {
+    background: linear-gradient(135deg, #2f7cf6, #5b5bf6); color: #fff; border-radius: 28px;
+    padding: 56px 40px; text-align: center;
+  }
+  .cta h2 { color: #fff; margin-top: 0; }
+  .cta p { color: rgba(255, 255, 255, .85); max-width: 560px; margin: 0 auto 28px; font-size: 17px; }
+  .cta .btn-primary { background: #fff; color: #1d4fd8; }
+  .cta .btn-ghost { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .45); }
+  .cta .hero-actions { justify-content: center; }
+
+  footer { padding: 36px 0 48px; color: var(--muted); font-size: 14px; }
+  .foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .foot a { color: var(--muted); }
+
+  /* ---------- адаптив ---------- */
+  @media (max-width: 960px) {
+    .hero { grid-template-columns: 1fr; padding-top: 48px; gap: 40px; }
+    .grid-3 { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr 1fr; }
+    .project { grid-template-columns: 1fr; padding: 26px; }
+    .project .phone { justify-self: stretch; max-width: none; }
+  }
+  @media (max-width: 640px) {
+    .wrap { padding: 0 16px; }
+    .nav-links { display: none; }
+    section { padding: 52px 0; }
+    .steps { grid-template-columns: 1fr; }
+    .cta { padding: 40px 22px; border-radius: 22px; }
+    .hero-actions .btn { flex: 1 1 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="#top"><span class="logo-mark">D</span>Дмитрий</a>
+    <nav class="nav-links">
+      <a href="#services">Услуги</a>
+      <a href="#projects">Проекты</a>
+      <a href="#process">Как работаю</a>
+      <a href="#faq">Вопросы</a>
+    </nav>
+    <a class="btn btn-primary btn-sm" href="https://t.me/NullorZero" target="_blank" rel="noopener">Написать</a>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap hero">
+    <div>
+      <span class="badge">Беру новые проекты</span>
+      <h1>Telegram-боты, которые <em>работают на ваш бизнес</em> круглосуточно</h1>
+      <p class="lead">Привет, я Дмитрий. Делаю ботов для малого бизнеса: принимают заявки, записывают клиентов и отвечают на вопросы с помощью ИИ, пока вы заняты делом.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://t.me/NullorZero" target="_blank" rel="noopener">Обсудить проект</a>
+        <a class="btn btn-ghost" href="#projects">Посмотреть работы</a>
+      </div>
+      <div class="facts">
+        <span>Бесплатная оценка задачи</span>
+        <span>Исходный код — ваш</span>
+        <span>14 дней поддержки</span>
+      </div>
+    </div>
+
+    <div class="phone" aria-label="Пример диалога с ИИ-консультантом">
+      <div class="chat-head">
+        <div class="avatar">Р</div>
+        <div>
+          <div class="chat-title">Ремонт за день</div>
+          <div class="chat-sub">бот · отвечает мгновенно</div>
+        </div>
+      </div>
+      <div class="chat">
+        <div class="msg out" style="animation-delay:.2s">Сколько стоит поменять экран на айфоне?</div>
+        <div class="msg in" style="animation-delay:1s">Замена экрана iPhone — от 4 500 ₽, займёт 1–2 часа. Диагностика бесплатная, точную цену назовём до начала ремонта.</div>
+        <div class="msg out" style="animation-delay:2s">А курьер у вас есть?</div>
+        <div class="msg in" style="animation-delay:2.8s">Да, по городу: заберём и привезём за 500 ₽, а при ремонте от 10 000 ₽ — бесплатно. Оформить заявку?</div>
+        <div class="kb" style="animation-delay:3.3s"><span>📝 Оставить заявку</span><span>🙋 Оператор</span></div>
+        <div class="typing" style="animation-delay:3.8s"><i></i><i></i><i></i></div>
+      </div>
+    </div>
+  </div>
+
+  <section id="services">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Услуги</div>
+        <h2>Что могу сделать для вас</h2>
+        <p>Цены ориентировочные: точную стоимость назову после короткого обсуждения задачи.</p>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="icon">📝</div>
+          <h3>Бот для заявок и записи</h3>
+          <p>Клиент оставляет заявку в пару нажатий, вы получаете её в Telegram и ведёте до результата.</p>
+          <ul>
+            <li>Анкета с кнопками и номером телефона в одно нажатие</li>
+            <li>Статусы заявок и уведомления клиенту</li>
+            <li>Статистика, выгрузка в Excel, рассылки</li>
+          </ul>
+          <div class="price">от <b>3 000 ₽</b></div>
+        </div>
+        <div class="card">
+          <div class="icon">🤖</div>
+          <h3>ИИ-консультант</h3>
+          <p>Отвечает клиентам 24/7 по вашим ценам и правилам и не выдумывает того, чего нет в базе.</p>
+          <ul>
+            <li>Обучается на ваших документах и FAQ</li>
+            <li>Сложные вопросы передаёт живому сотруднику</li>
+            <li>ChatGPT, Claude, YandexGPT или GigaChat</li>
+          </ul>
+          <div class="price">от <b>6 000 ₽</b></div>
+        </div>
+        <div class="card">
+          <div class="icon">🛠</div>
+          <h3>Доработка и починка</h3>
+          <p>Уже есть бот, но он падает, тормозит или ему не хватает функций? Разберусь и исправлю.</p>
+          <ul>
+            <li>Исправление ошибок и «зависаний»</li>
+            <li>Новые разделы, оплата, админка</li>
+            <li>Перенос на сервер для работы 24/7</li>
+          </ul>
+          <div class="price">от <b>1 000 ₽</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Проекты</div>
+        <h2>Готовые решения</h2>
+        <p>Демо-боты для мастерской по ремонту техники. Под ваш бизнес адаптируются за день-два.</p>
+      </div>
+
+      <article class="project">
+        <div>
+          <span class="tag">Демо</span>
+          <h3>Бот приёма заявок с админ-панелью</h3>
+          <p>Клиент выбирает услугу, оставляет имя, телефон и комментарий. Администратор получает карточку заявки и меняет статус одной кнопкой, а клиенту сразу приходит уведомление. Есть статистика, выгрузка всех заявок в Excel и рассылка по клиентам.</p>
+          <div class="tags"><span class="tag">Python</span><span class="tag">aiogram 3</span><span class="tag">SQLite</span></div>
+          <div class="hero-actions">
+            <a class="btn btn-primary btn-sm" href="https://github.com/nullbot-dev/leadbot" target="_blank" rel="noopener">Код на GitHub</a>
+          </div>
+        </div>
+        <div class="phone" aria-label="Карточка заявки у администратора">
+          <div class="chat-head">
+            <div class="avatar">Р</div>
+            <div><div class="chat-title">Ремонт за день — заявки</div><div class="chat-sub">админ-чат</div></div>
+          </div>
+          <div class="chat">
+            <div class="msg in admin-card">
+              <b>Заявка №27</b> · 🔧 В работе<br>
+              Услуга: Ремонт ноутбука<br>
+              Имя: Анна<br>
+              Телефон: +7 900 •••-••-12<br>
+              Комментарий: не включается после обновления
+              <div class="row"><span>🆕 Новая</span><span class="on">🔧 В работе</span></div>
+              <div class="row"><span>✅ Выполнена</span><span>🚫 Отклонена</span></div>
+            </div>
+            <div class="msg in">Статус вашей заявки №27 изменён: <b>🔧 В работе</b></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="project">
+        <div>
+          <span class="tag">Демо</span>
+          <h3>ИИ-консультант по базе знаний</h3>
+          <p>Отвечает на вопросы о ценах, сроках и гарантии строго по документам компании. Если ответа нет или клиент просит человека, сам передаёт диалог сотруднику с кратким пересказом. Сотрудник отвечает прямо из Telegram, а бот учитывает его ответ дальше.</p>
+          <div class="tags"><span class="tag">Python</span><span class="tag">aiogram 3</span><span class="tag">Claude API</span><span class="tag">Tool use</span></div>
+          <div class="hero-actions">
+            <a class="btn btn-primary btn-sm" href="https://github.com/nullbot-dev/aibot" target="_blank" rel="noopener">Код на GitHub</a>
+          </div>
+        </div>
+        <div class="phone" aria-label="Передача диалога оператору">
+          <div class="chat-head">
+            <div class="avatar">Р</div>
+            <div><div class="chat-title">Ремонт за день</div><div class="chat-sub">ИИ-консультант</div></div>
+          </div>
+          <div class="chat">
+            <div class="msg out">Хочу вернуть деньги за ремонт</div>
+            <div class="msg in">Понимаю. Этот вопрос решает сотрудник — уже передал ему ваш запрос, он ответит здесь же.</div>
+            <div class="msg in admin-card"><b>🆘 Нужен оператор</b><br>Причина: возврат денег<br>Суть: клиент недоволен ремонтом и просит вернуть оплату</div>
+            <div class="msg in">👤 Оператор: Здравствуйте! Подскажите номер заказа, разберёмся.</div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section id="process">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Как работаю</div>
+        <h2>Прозрачно на каждом шаге</h2>
+      </div>
+      <div class="steps">
+        <div class="step"><h3>Обсуждаем задачу</h3><p>Вы рассказываете, что нужно. Я задаю вопросы и называю срок и цену — бесплатно.</p></div>
+        <div class="step"><h3>Присылаю план</h3><p>Экраны, кнопки, что видит клиент и что админ. Начинаю, только когда всё согласовано.</p></div>
+        <div class="step"><h3>Показываю по ходу</h3><p>Промежуточная версия бота, которую можно потрогать. Правки вносим сразу.</p></div>
+        <div class="step"><h3>Сдаю и поддерживаю</h3><p>Запускаю бота, отдаю код и инструкцию. 14 дней бесплатно исправляю ошибки.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Вопросы</div>
+        <h2>Частые вопросы</h2>
+      </div>
+      <div class="faq">
+        <details>
+          <summary>Сколько времени занимает разработка?</summary>
+          <p>Простой бот для заявок — 3–5 дней. ИИ-консультант — от 4 дней, в зависимости от объёма базы знаний. Точный срок назову после обсуждения.</p>
+        </details>
+        <details>
+          <summary>Нужно ли что-то платить, кроме разработки?</summary>
+          <p>Бот должен где-то работать круглосуточно — обычно это недорогой сервер, от 200–300 ₽ в месяц. Для ИИ-бота отдельно оплачиваются запросы к нейросети по тарифу её разработчика; заранее посчитаю примерную сумму под ваш поток клиентов.</p>
+        </details>
+        <details>
+          <summary>Смогу ли я сам менять тексты и цены?</summary>
+          <p>Да. Тексты и цены вынесены в отдельный файл, а база знаний ИИ-бота — это обычные текстовые документы. Покажу, как их обновлять.</p>
+        </details>
+        <details>
+          <summary>Кому будет принадлежать бот?</summary>
+          <p>Вам: бот создаётся на ваш аккаунт Telegram, исходный код передаю полностью, без привязки ко мне.</p>
+        </details>
+        <details>
+          <summary>Что если бот сломается после сдачи?</summary>
+          <p>В течение 14 дней исправляю ошибки бесплатно. Дальше — по договорённости, обычно это небольшие разовые работы.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap">
+      <div class="cta">
+        <h2>Расскажите о вашей задаче</h2>
+        <p>Опишите в паре предложений, что должен делать бот. Отвечу в течение дня, оценю сроки и стоимость бесплатно.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://t.me/NullorZero" target="_blank" rel="noopener">Написать в Telegram</a>
+          <a class="btn btn-ghost" href="https://github.com/nullbot-dev" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>© <span id="year">2026</span> Дмитрий · Telegram-боты для бизнеса</span>
+    <span><a href="https://github.com/nullbot-dev" target="_blank" rel="noopener">GitHub</a></span>
+  </div>
+</footer>
+
+<script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+</body>
+</html>
