@@ -72,7 +72,8 @@
   }
 
   /* ---------- шапка ---------- */
-  header { position: fixed; top: 16px; left: 0; right: 0; z-index: 50; }
+  header { position: fixed; top: 16px; left: 0; right: 0; z-index: 50; transition: transform .35s var(--ease); }
+  header.away { transform: translateY(-130%); }
   .nav {
     display: flex; align-items: center; justify-content: space-between; gap: 16px;
     max-width: 1180px; margin: 0 auto; padding: 10px 10px 10px 20px; border-radius: 18px;
@@ -114,7 +115,7 @@
   .pill .dot::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(52,211,153,.7); animation: ping 2s infinite; }
   @keyframes ping { 70% { box-shadow: 0 0 0 8px rgba(52,211,153,0); } 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); } }
   h1 { font-size: clamp(36px, 5.4vw, 66px); line-height: 1.06; margin: 22px 0 22px; }
-  .rotator { display: inline-grid; vertical-align: bottom; height: 1.1em; overflow: hidden; }
+  .rotator { display: inline-grid; vertical-align: bottom; height: 1.25em; line-height: 1.25; overflow: hidden; }
   /* градиент на каждом слове отдельно: если повесить его на весь блок, браузер рисует контуры всех слов сразу */
   .rotator span { grid-area: 1 / 1; transform: translateY(110%); opacity: 0; transition: transform .6s var(--ease), opacity .25s ease; white-space: nowrap;
     background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -290,7 +291,7 @@
     .nav-links { display: none; }
   }
   @media (max-width: 640px) {
-    .wrap { padding: 0 16px; }
+    .wrap { padding-left: 16px; padding-right: 16px; }
     header { top: 0; padding: 10px 10px 14px; background: linear-gradient(var(--bg) 55%, transparent); }
     section { padding: 76px 0; }
     .bento { grid-template-columns: 1fr; }
@@ -606,6 +607,17 @@
       el.style.setProperty("--my", `${ev.clientY - r.top}px`);
     });
   });
+
+  // шапка прячется при прокрутке вниз и возвращается при прокрутке вверх, чтобы не закрывать текст
+  const header = document.querySelector("header");
+  let lastY = scrollY;
+  addEventListener("scroll", () => {
+    const y = scrollY;
+    if (Math.abs(y - lastY) < 6) return;
+    header.classList.toggle("away", y > lastY && y > 80);
+    lastY = y;
+  }, { passive: true });
+  document.querySelectorAll("header a").forEach((a) => a.addEventListener("focus", () => header.classList.remove("away")));
 
   // смена слов в заголовке
   const words = [...document.querySelectorAll(".rotator span")];
